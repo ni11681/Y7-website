@@ -1,23 +1,93 @@
-<html>
-<head>
+import pygame
+import time
+import random
 
-  
-</head>
+pygame.init()
 
-<body>
-<h1>Crazy Nature</h1>
+# Constants
+WIDTH, HEIGHT = 800, 600
+CELL_SIZE = 20
+SNAKE_COLOR = (0, 255, 0)
+FOOD_COLOR = (255, 0, 0)
 
+# Initialize screen
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
+pygame.display.set_caption('Snake Game')
 
+# Snake class
+class Snake:
+    def __init__(self):
+        self.body = [(WIDTH // 2, HEIGHT // 2)]
+        self.direction = (1, 0)
 
+    def move(self):
+        head = self.body[0]
+        new_head = (head[0] + self.direction[0] * CELL_SIZE, head[1] + self.direction[1] * CELL_SIZE)
+        self.body.insert(0, new_head)
+        self.body.pop()
 
-  
-</body>
+    def change_direction(self, direction):
+        if (direction[0] * -1, direction[1] * -1) != self.direction:
+            self.direction = direction
 
+    def grow(self):
+        tail = self.body[-1]
+        new_tail = (tail[0] - self.direction[0] * CELL_SIZE, tail[1] - self.direction[1] * CELL_SIZE)
+        self.body.append(new_tail)
 
+    def check_collision(self):
+        head = self.body[0]
+        if head[0] < 0 or head[0] >= WIDTH or head[1] < 0 or head[1] >= HEIGHT:
+            return True
+        if head in self.body[1:]:
+            return True
+        return False
 
+    def draw(self):
+        for segment in self.body:
+            pygame.draw.rect(screen, SNAKE_COLOR, (segment[0], segment[1], CELL_SIZE, CELL_SIZE))
 
+# Food class
+class Food:
+    def __init__(self):
+        self.position = (random.randint(0, WIDTH // CELL_SIZE - 1) * CELL_SIZE, random.randint(0, HEIGHT // CELL_SIZE - 1) * CELL_SIZE)
 
+    def draw(self):
+        pygame.draw.rect(screen, FOOD_COLOR, (self.position[0], self.position[1], CELL_SIZE, CELL_SIZE))
 
+# Main game loop
+snake = Snake()
+food = Food()
+clock = pygame.time.Clock()
 
-  
-</html>
+while True:
+    screen.fill((0, 0, 0))
+
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            pygame.quit()
+            quit()
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_UP:
+                snake.change_direction((0, -1))
+            elif event.key == pygame.K_DOWN:
+                snake.change_direction((0, 1))
+            elif event.key == pygame.K_LEFT:
+                snake.change_direction((-1, 0))
+            elif event.key == pygame.K_RIGHT:
+                snake.change_direction((1, 0))
+
+    snake.move()
+    if snake.body[0] == food.position:
+        snake.grow()
+        food = Food()
+
+    snake.draw()
+    food.draw()
+
+    if snake.check_collision():
+        pygame.quit()
+        quit()
+
+    pygame.display.update()
+    clock.tick(10)
